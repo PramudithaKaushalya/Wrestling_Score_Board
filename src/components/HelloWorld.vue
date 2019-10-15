@@ -9,7 +9,7 @@
     
       <div style="background:#ECECEC; padding:50px; ">
         <center>
-        <div class="card bg-light mb-3 col-12" style="max-width: 40rem; max-height: 220px">
+        <div class="card bg-light mb-3 col-12" style="max-width: 30rem; max-height: 220px">
             <p style="font-size:150px">
               <b>
               {{ minutes | zeroPad }} :
@@ -35,13 +35,11 @@
       </div>
       <br>      
       <button type="button" class="btn btn-secondary" @click="startTimer" :disabled="isRunning">Start</button>
-      <button type="button" class="btn btn-secondary" @click="stopTimer" :disabled="!isRunning">Stop</button>     
-      <button type="button" class="btn btn-secondary" @click="clearAll">Restart</button>
+      <button type="button" class="btn btn-success" @click="intervalStart">Interval</button> 
       <button type="button" class="btn btn-primary" @click="bluePassive">Passive</button>
       <button type="button" class="btn btn-danger" @click="redPassive">Passive</button>
-      <button type="button" class="btn btn-info" @click="passiveStart">Start</button>
-      <button type="button" class="btn btn-info" @click="stopPassTimer">Stop</button>
-      <button type="button" class="btn btn-info" @click="clearPass">Restart</button> 
+      <button type="button" class="btn btn-secondary" @click="stopTimer" :disabled="!isRunning">Stop</button>     
+      <button type="button" class="btn btn-secondary" @click="clearAll">Restart</button>
   </div>
 </template>
 
@@ -111,11 +109,7 @@ export default {
       stopTimer: function () {
         this.isRunning = false;
         cancelAnimationFrame(this.animateFrame);
-      },
-
-      stopPassTimer: function () {
         cancelAnimationFrame(this.animatePassFrame);
-        this.stopTimer();
       },
 
       clearAll: function () {
@@ -138,10 +132,24 @@ export default {
 
       passiveStart: function () {
         var vm = this;
-
         vm.startTimer();
         vm.setSubtractStartPassTime(vm.passTime);
 
+        (function loop(){
+          vm.nowPassTime = Math.floor(performance.now());
+          vm.passTime = vm.nowPassTime - vm.startPassTime;
+          vm.animatePassFrame = requestAnimationFrame(loop);
+        }());        
+      },
+
+      stopPassTimer: function () {
+        cancelAnimationFrame(this.animatePassFrame);
+      },
+
+      intervalStart: function () {
+        var vm = this;
+        vm.setSubtractStartPassTime(vm.passTime);
+        vm.color = "#ECECEC";
         (function loop(){
           vm.nowPassTime = Math.floor(performance.now());
           vm.passTime = vm.nowPassTime - vm.startPassTime;
@@ -152,11 +160,13 @@ export default {
       },
 
       redPassive: function () {
-        this.color = "#FF0000"
+        this.color = "#FF0000";
+        this.passiveStart();
       },
 
       bluePassive: function () {
-        this.color = "#0000FF"
+        this.color = "#0000FF";
+        this.passiveStart();
       }
     },
 
@@ -170,7 +180,14 @@ export default {
       },
 
       passiveSeconds: function () {
-        return Math.floor(this.passTime / 1000) % 31;
+        var x = Math.floor(this.passTime / 1000) % 32;
+
+        if(x==31){
+          this.clearPass();
+          return 0;
+        }else{
+          return x; 
+        }
       },
     },
 
@@ -187,11 +204,8 @@ export default {
 <style scoped>
 
 h1 {
-  color: #ADD8E6;
+  color: #FFF;
   border-color:  #000;
   margin-left: 600px;
-}
-h3 {
-  margin: 40px 0 0;
 }
 </style>
